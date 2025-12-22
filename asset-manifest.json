@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/entregas-frontend/static/css/main.323d7611.css",
-    "main.js": "/entregas-frontend/static/js/main.48be1c23.js",
+    "main.js": "/entregas-frontend/static/js/main.37d805f8.js",
     "static/js/453.9d77d8c1.chunk.js": "/entregas-frontend/static/js/453.9d77d8c1.chunk.js",
     "index.html": "/entregas-frontend/index.html",
     "main.323d7611.css.map": "/entregas-frontend/static/css/main.323d7611.css.map",
-    "main.48be1c23.js.map": "/entregas-frontend/static/js/main.48be1c23.js.map",
+    "main.37d805f8.js.map": "/entregas-frontend/static/js/main.37d805f8.js.map",
     "453.9d77d8c1.chunk.js.map": "/entregas-frontend/static/js/453.9d77d8c1.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.323d7611.css",
-    "static/js/main.48be1c23.js"
+    "static/js/main.37d805f8.js"
   ]
 }

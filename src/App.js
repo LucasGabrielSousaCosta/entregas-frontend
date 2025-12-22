@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Mapa from './pages/Mapa';
 import Auth from './pages/Auth';
 import Transportadora from './pages/Transportadora';

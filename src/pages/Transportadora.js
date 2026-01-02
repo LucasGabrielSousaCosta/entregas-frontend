@@ -3,10 +3,11 @@ import { MapContainer, TileLayer, Marker, useMapEvents, Popup, Polyline } from '
 import axios from 'axios';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import * as signalR from "@microsoft/signalr";
 
 // --- ÍCONE PERSONALIZADO ---
 const veiculoIcon = new L.Icon({
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/2769/2769339.png',
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/1048/1048314.png',
     iconSize: [40, 40],
     iconAnchor: [20, 40],
     popupAnchor: [0, -40]
@@ -84,6 +85,54 @@ const Transportadora = () => {
         }
     };
 
+    // --- CONFIGURAÇÃO DO SIGNALR E PERSISTÊNCIA ---
+    useEffect(() => {
+        const hubUrl = 'https://entregas-hbqy.onrender.com/deliveryHub';
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(hubUrl)
+            .withAutomaticReconnect()
+            .build();
+
+        let isMounted = true;
+
+        // Escuta atualizações de posição de qualquer veículo
+        connection.on("UpdatePosition", (dados) => {
+            if (isMounted) {
+                // Atualiza apenas se o veículo já estiver na lista (garante que é da transportadora)
+                setVeiculos(prev => prev.map(v => 
+                    v.id === dados.veiculoId ? { ...v, localizacao: `${dados.lng}, ${dados.lat}` } : v
+                ));
+            }
+        });
+
+        // Escuta quando uma nova rota é gerada
+        connection.on("ReceberRota", (veiculoId, pontos) => {
+            if (isMounted) setRotaAtiva(pontos);
+        });
+
+        connection.start().catch(err => console.error("Erro SignalR Transportadora:", err));
+
+        // Lógica de Persistência (F5): Tenta recuperar rota de qualquer veículo em entrega
+        const recuperarRotaAtiva = async () => {
+            try {
+                // Busca pedidos que estão com a transportadora e em status "Em Rota" (4)
+                const res = await axios.get(`${apiBase}/Pedido/pedidos-em-entrega`);
+                const emEntrega = res.data.find(p => p.statusEntrega === 4);
+                if (emEntrega) {
+                    const resRota = await axios.get(`${apiBase}/Entrega/${emEntrega.id}/rota`);
+                    if (resRota.data) setRotaAtiva(resRota.data);
+                }
+            } catch (err) { console.log("Nenhuma rota ativa para persistir."); }
+        };
+
+        recuperarRotaAtiva();
+
+        return () => {
+            isMounted = false;
+            connection.stop();
+        };
+    }, [apiBase]);
+
     const handleSalvarNovoVeiculo = async () => {
         if (!formNome || !formLocal) return alert("Preencha o nome e selecione o local no mapa!");
         try {
@@ -132,10 +181,12 @@ const Transportadora = () => {
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             
                             {/* ROTA ATIVA PARA O MOTORISTA */}
-                            {rotaAtiva.length > 0 && (
-                                <Polyline positions={rotaAtiva} pathOptions={{ color: '#2ecc71', weight: 6 }} />
+                            {rotaAtiva && rotaAtiva.length > 0 && (
+                                <Polyline 
+                                    positions={rotaAtiva} 
+                                    pathOptions={{ color: '#2ecc71', weight: 6, opacity: 0.8 }} 
+                                />
                             )}
-
                             {veiculos.map(v => {
                                 const parts = v.localizacao.split(',');
                                 const coords = [parseFloat(parts[1]), parseFloat(parts[0])]; // Inversão correta para o Leaflet

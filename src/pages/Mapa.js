@@ -141,7 +141,7 @@ const Mapa = () => {
             const pedidos = res.data || [];
             setPedidosAtivos(pedidos);
 
-            // CORREÇÃO: Status 4 é "Em Entrega" no seu sistema
+            // Status 4 é "Em Entrega" no seu sistema
             const pedidoEmRota = pedidos.find(p => p.statusEntrega === 4);
             if (pedidoEmRota) {
                 await carregarRotaSalva(pedidoEmRota.id);

@@ -285,7 +285,7 @@ const Transportadora = () => {
 
 // --- ESTILOS ---
 const styles = {
-    pageContainer: { display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', fontFamily: 'sans-serif', backgroundColor: '#f5f5f5' },
+    pageContainer: { display: 'flex', flexDirection: 'column', height: '100%', width: '100vw', fontFamily: 'sans-serif', backgroundColor: '#f5f5f5' },
     topNav: { display: 'flex', backgroundColor: '#fff', padding: '5px 10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 1100 },
     navBtn: { flex: 1, padding: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: '14px' },
     navBtnActive: { flex: 1, padding: '15px', background: 'none', borderBottom: '3px solid #000', fontWeight: 'bold', color: '#000' },

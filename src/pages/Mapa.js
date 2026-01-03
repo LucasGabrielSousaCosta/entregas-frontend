@@ -18,6 +18,13 @@ const carroIcon = new L.Icon({
     iconUrl: 'https://cdn-icons-png.flaticon.com/512/1048/1048314.png',
     iconSize: [35, 35], iconAnchor: [17, 17], popupAnchor: [0, -17]
 });
+// ÍCONE ESPECIAL PARA O MERCADO DE TESTE (Ex: Uma estrela dourada)
+const supermercadoTesteIcon = new L.Icon({
+    iconUrl: 'https://cdn-icons-png.flaticon.com/512/1828/1828884.png', 
+    iconSize: [45, 45], 
+    iconAnchor: [22, 45], 
+    popupAnchor: [0, -45]
+});
 
 // --- COMPONENTES AUXILIARES ---
 function ClickHandler({ isActive, onLocationSelected }) {
@@ -30,8 +37,9 @@ function ClickHandler({ isActive, onLocationSelected }) {
 function RecenterMap({ position }) {
     const map = useMap();
     useEffect(() => {
-        if (position && Array.isArray(position) && !isNaN(position[0]) && !isNaN(position[1])) {
-            map.setView(position, 15);
+        if (position && Array.isArray(position) && !isNaN(position[0])) {
+            // O 15 é o nível de zoom. flyTo cria uma animação suave até o ícone
+            map.flyTo(position, 15, { animate: true });
         }
     }, [position, map]);
     return null;
@@ -116,11 +124,22 @@ const Mapa = () => {
     const carregarMinhaLocalizacao = async () => {
         try {
             const res = await axios.get(`${apiBase}/account/me`, { withCredentials: true });
-            if (res.data.localizacao) {
-                const [lng, lat] = res.data.localizacao.split(',').map(Number);
-                if (!isNaN(lat) && !isNaN(lng)) setMinhaPosicao([lat, lng]);
+            console.log("Dados do usuário:", res.data); // Verifique se a localização vem aqui
+
+            if (res.data && res.data.localizacao) {
+                // Supondo que o banco retorna "lng, lat"
+                const partes = res.data.localizacao.split(',');
+                const lng = parseFloat(partes[0].trim());
+                const lat = parseFloat(partes[1].trim());
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    console.log("Posição definida para o ícone:", [lat, lng]);
+                    setMinhaPosicao([lat, lng]);
+                }
             }
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error("Erro ao carregar localização inicial:", err); 
+        }
     };
 
     // Busca a rota persistida (Crucial para o F5)
@@ -285,20 +304,37 @@ const Mapa = () => {
 
             <div style={styles.contentWrapper}>
                 {abaAtiva === 'mapa' ? (
-                    <div style={{height: '100%', position: 'relative'}}>
+                    <div style={styles.mapContainerCustom}>
                         <MapContainer center={[-16.683, -49.255]} zoom={13} style={{ height: '100%', width: '100%' }}>
                             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                             <RecenterMap position={minhaPosicao} />
                             <ClickHandler isActive={editandoLocalizacao} onLocationSelected={salvarLocalizacao} />
                             
-                            {minhaPosicao && !isNaN(minhaPosicao[0]) && (
-                                <Marker position={minhaPosicao} icon={clienteIcon}><Popup>Minha Casa</Popup></Marker>
+                            {/* CLIENTE: Aparece se houver posição no estado (carregada do banco no useEffect inicial) */}
+                            {minhaPosicao && (
+                                <Marker position={minhaPosicao} icon={clienteIcon}>
+                                    <Popup>Minha Casa</Popup>
+                                </Marker>
                             )}
                             
+                            {/* SUPERMERCADOS: Diferenciando o de Teste */}
                             {supermercados.filter(s => s.localizacao).map(s => {
                                 const parts = s.localizacao.split(',');
                                 const coords = [parseFloat(parts[1]), parseFloat(parts[0])];
-                                return <Marker key={`s-${s.id}`} position={coords} icon={supermercadoIcon} eventHandlers={{ click: () => carregarCatalogo(s.id, s.nome) }}><Popup>{s.nome}</Popup></Marker>
+                                
+                                // Verifica se é o mercado de teste pelo e-mail
+                                const isTeste = s.email === 'mercado@teste.com';
+                                
+                                return (
+                                    <Marker 
+                                        key={`s-${s.id}`} 
+                                        position={coords} 
+                                        icon={isTeste ? supermercadoTesteIcon : supermercadoIcon} 
+                                        eventHandlers={{ click: () => carregarCatalogo(s.id, s.nome) }}
+                                    >
+                                        <Popup>{isTeste ? `⭐ ${s.nome} (Demonstração)` : s.nome}</Popup>
+                                    </Marker>
+                                );
                             })}
 
                             {/* ROTA ATIVA (SIGNALR OU PERSISTIDA) */}
@@ -427,12 +463,12 @@ const Mapa = () => {
 
 // --- ESTILOS MANTIDOS FIELMENTE ---
 const styles = {
-    pageContainer: { display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', fontFamily: 'sans-serif', backgroundColor: '#f5f5f5' },
-    topNav: { display: 'flex', backgroundColor: '#fff', padding: '5px 10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 1100 },
+    pageContainer: { display: 'flex', flexDirection: 'column', height: '100vh', maxHeight: '100%', width: '100vw',overflow: 'hidden', fontFamily: 'sans-serif', backgroundColor: '#f5f5f5', minHeight: '0'},
+    topNav: { display: 'flex', backgroundColor: '#fff', padding: '5px 10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 1100, flexShrink: 0 },
     navBtn: { flex: 1, padding: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: '14px' },
     navBtnActive: { flex: 1, padding: '15px', background: 'none', borderBottom: '3px solid #000', fontWeight: 'bold', cursor: 'pointer', color: '#000' },
-    contentWrapper: { flex: 1, position: 'relative', overflow: 'hidden' },
-    controls: { padding: '20px', backgroundColor: '#fff', display: 'flex', justifyContent: 'center', borderTop: '1px solid #eee' },
+    contentWrapper: { flex: 1, position: 'relative', minHeight: 0, height: 'auto', overflow: 'hidden' },
+    controls: { padding: '20px', backgroundColor: '#fff', display: 'flex', justifyContent: 'center', borderTop: '1px solid #eee', flexShrink: 0 },
     mainBtn: { padding: '15px', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', width: '90%', fontSize: '16px' },
     pedidosListContainer: { padding: '20px', height: '100%', overflowY: 'auto', boxSizing: 'border-box' },
     pedidoCard: { backgroundColor: '#fff', borderRadius: '12px', padding: '15px', marginBottom: '15px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #eee' },
@@ -454,7 +490,12 @@ const styles = {
     carrinhoLinha: { display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee', fontSize: '14px' },
     totalCarrinhoLinha: { display: 'flex', justifyContent: 'space-between', marginTop: '15px', fontSize: '16px', color: '#2ecc71' },
     cancelarBtn: { width: '100%', padding: '16px', backgroundColor: '#fff', color: '#ff4d4d', borderRadius: '15px', border: '1px solid #ff4d4d', fontWeight: 'bold', marginTop: '10px', fontSize: '16px', cursor: 'pointer' },
-    cancelarBtnSmall: { marginTop: '10px', padding: '8px 15px', backgroundColor: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }
+    cancelarBtnSmall: { marginTop: '10px', padding: '8px 15px', backgroundColor: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', borderRadius: '8px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' },
+    mapContainerCustom: {
+        flex: 1,
+        width: '100%',
+        height: '100%'
+    }
 };
 
 export default Mapa;

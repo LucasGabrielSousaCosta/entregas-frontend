@@ -4,6 +4,7 @@ import Mapa from './pages/Mapa';
 import Auth from './pages/Auth';
 import Transportadora from './pages/Transportadora';
 import Supermercado from './pages/Supermercado';
+import DemoPage from './pages/DemoPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/transportadora" element={<Transportadora />} />
         <Route path="/supermercado" element={<Supermercado />} />
         <Route path="/" element={<Navigate to="/auth" />} />
+        <Route path="/demo" element={<DemoPage />} />
       </Routes>
     </Router>
   );

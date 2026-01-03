@@ -118,6 +118,23 @@ const Auth = () => {
           <button type="submit" style={styles.button}>
             {isLogin ? 'Entrar' : 'Cadastrar'}
           </button>
+          <button 
+            type="button" 
+            onClick={() => navigate('/demo')} 
+            style={{ 
+              marginTop: '15px', 
+              padding: '12px', 
+              backgroundColor: '#ff9800', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              fontWeight: 'bold', 
+              cursor: 'pointer',
+              width: '100%'
+            }}
+          >
+            Acessar Modo de Teste (Demonstração)
+          </button>
         </form>
 
         <button onClick={() => setIsLogin(!isLogin)} style={styles.linkButton}>
